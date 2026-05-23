@@ -1,0 +1,54 @@
+name: Build ROS-O images
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - docker/ros-one/**
+      - .github/workflows/build-ros-images.yml
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-image:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: ros-base
+            context: docker/ros-one/ros-base
+            tag: ros-base
+            noble_tag: ros-base-noble
+          - name: desktop-full
+            context: docker/ros-one/desktop-full
+            tag: desktop-full
+            noble_tag: desktop-full-noble
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push ${{ matrix.name }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/openmower-ros-one:${{ matrix.tag }}
+            ghcr.io/${{ github.repository_owner }}/openmower-ros-one:${{ matrix.noble_tag }}

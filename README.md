@@ -103,6 +103,49 @@ echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/openmow
 sudo apt update
 ```
 
+
+## Docker image
+
+This repo also defines a ROS-O/Noble replacement for `ros:noetic-ros-base-focal`:
+
+```text
+ghcr.io/olliewalsh/openmower-ros-one:one-ros-base-noble
+```
+
+The image installs the ROS-O apt source, this repository's apt source, and
+`ros-one-ros-base`. Its entrypoint sources `/opt/ros/one/setup.bash`.
+
+Build locally:
+
+```bash
+docker build -t openmower/ros:one-ros-base-noble docker/ros-one/ros-base
+```
+
+Run locally:
+
+```bash
+docker run --rm -it openmower/ros:one-ros-base-noble
+```
+
+## Docker Images
+
+This repository also contains a ROS-O/Noble `ros-base` image definition at
+`docker/ros-one/ros-base`. It is intended as the replacement for
+`docker.io/ros:noetic-ros-base-focal` when building OpenMower on Ubuntu 24.04
+with ROS-O.
+
+Published image:
+
+```text
+ghcr.io/olliewalsh/openmower-ros-one:ros-base
+```
+
+Local build:
+
+```bash
+docker build -t openmower-ros-one:ros-base docker/ros-one/ros-base
+```
+
 ## Use the rosdep overlay
 
 For a local checkout:
