@@ -1,0 +1,56 @@
+# Packages missing from ROS-O/Noble for OpenMower.
+#
+# Each package entry describes the bloom release repository and the ROS package
+# names to build from it. Debian package names are derived as ros-one-<name>,
+# with underscores converted to hyphens.
+
+rosdistro: one
+ubuntu_codename: noble
+ros_prefix: /opt/ros/one
+debian_prefix: ros-one
+patches_dir: patches
+
+repositories:
+  grid_map:
+    release_repo: https://github.com/anybotics/grid_map-release.git
+    version: 1.6.4-1
+    tag_template: release/noetic/{package}/{version}
+    debian_branch_template: debian/noetic/focal/{package}
+    packages:
+      - grid_map_msgs
+      - grid_map_core
+      - grid_map_cv
+      - grid_map_ros
+      - grid_map_filters
+
+  nmea_msgs:
+    release_repo: https://github.com/ros-drivers-gbp/nmea_msgs-release.git
+    version: 1.1.0-1
+    tag_template: release/noetic/{package}/{version}
+    debian_branch_template: debian/noetic/focal/{package}
+    packages:
+      - nmea_msgs
+
+  rtcm_msgs:
+    release_repo: https://github.com/nobleo/rtcm_msgs-release.git
+    version: 1.1.6-1
+    tag_template: release/noetic/{package}/{version}
+    debian_branch_template: debian/noetic/focal/{package}
+    packages:
+      - rtcm_msgs
+
+  ublox:
+    release_repo: https://github.com/KumarRobotics/ublox-release.git
+    version: 1.5.0-1
+    tag_template: release/noetic/{package}/{version}
+    debian_branch_template: debian/noetic/focal/{package}
+    packages:
+      - ublox_serialization
+      - ublox_msgs
+      - ublox_gps
+      - ublox
+
+native_rosdep:
+  paho-mqtt-cpp:
+    ubuntu:
+      noble: [libpaho-mqttpp-dev]

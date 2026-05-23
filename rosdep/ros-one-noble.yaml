@@ -1,0 +1,65 @@
+# Custom rosdep overrides for OpenMower on Ubuntu 24.04 with ROS-O.
+
+grid_map:
+  ubuntu:
+    noble: [ros-one-grid-map-core, ros-one-grid-map-msgs, ros-one-grid-map-ros]
+grid_map_core:
+  ubuntu:
+    noble: [ros-one-grid-map-core]
+grid_map_costmap_2d:
+  ubuntu:
+    noble: [ros-one-grid-map-costmap-2d]
+grid_map_cv:
+  ubuntu:
+    noble: [ros-one-grid-map-cv]
+grid_map_demos:
+  ubuntu:
+    noble: [ros-one-grid-map-demos]
+grid_map_filters:
+  ubuntu:
+    noble: [ros-one-grid-map-filters]
+grid_map_loader:
+  ubuntu:
+    noble: [ros-one-grid-map-loader]
+grid_map_msgs:
+  ubuntu:
+    noble: [ros-one-grid-map-msgs]
+grid_map_octomap:
+  ubuntu:
+    noble: [ros-one-grid-map-octomap]
+grid_map_pcl:
+  ubuntu:
+    noble: [ros-one-grid-map-pcl]
+grid_map_ros:
+  ubuntu:
+    noble: [ros-one-grid-map-ros]
+grid_map_rviz_plugin:
+  ubuntu:
+    noble: [ros-one-grid-map-rviz-plugin]
+grid_map_sdf:
+  ubuntu:
+    noble: [ros-one-grid-map-sdf]
+grid_map_visualization:
+  ubuntu:
+    noble: [ros-one-grid-map-visualization]
+nmea_msgs:
+  ubuntu:
+    noble: [ros-one-nmea-msgs]
+rtcm_msgs:
+  ubuntu:
+    noble: [ros-one-rtcm-msgs]
+ublox:
+  ubuntu:
+    noble: [ros-one-ublox]
+ublox_gps:
+  ubuntu:
+    noble: [ros-one-ublox-gps]
+ublox_msgs:
+  ubuntu:
+    noble: [ros-one-ublox-msgs]
+ublox_serialization:
+  ubuntu:
+    noble: [ros-one-ublox-serialization]
+paho-mqtt-cpp:
+  ubuntu:
+    noble: [libpaho-mqttpp-dev]

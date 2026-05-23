@@ -1,0 +1,148 @@
+name: Build apt repository
+
+on:
+  workflow_dispatch:
+    inputs:
+      only:
+        description: Optional package/repository name to build, for example nmea_msgs or grid_map
+        required: false
+        type: string
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build-packages:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      DEBFULLNAME: Ollie Walsh
+      DEBEMAIL: ollie.walsh@gmail.com
+    steps:
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential ca-certificates curl debhelper devscripts dh-python \
+            dpkg-dev fakeroot git gnupg libdistro-info-perl python3 \
+            python3-yaml quilt xz-utils
+
+      - uses: actions/checkout@v4
+
+      - name: Configure ROS-O apt source
+        run: sudo scripts/setup_ros_one_apt.sh
+
+      - name: Build binary packages
+        env:
+          VAR_DEBFULLNAME: ${{ vars.DEBFULLNAME }}
+          VAR_DEBEMAIL: ${{ vars.DEBEMAIL }}
+        run: |
+          if [ -n "$VAR_DEBFULLNAME" ]; then
+            export DEBFULLNAME="$VAR_DEBFULLNAME"
+          fi
+          if [ -n "$VAR_DEBEMAIL" ]; then
+            export DEBEMAIL="$VAR_DEBEMAIL"
+          fi
+          export INSTALL_BUILD_DEPS=1
+          export INSTALL_BUILT_DEBS=1
+          export SUDO=sudo
+          args=(--binary)
+          if [ -n "${{ github.event.inputs.only }}" ]; then
+            args+=(--only "${{ github.event.inputs.only }}")
+          fi
+          python3 scripts/build_source_packages.py "${args[@]}"
+
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: deb-packages-${{ matrix.arch }}
+          path: out/*.deb
+
+  publish-repo:
+    needs: build-packages
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    env:
+      HAS_APT_REPO_GPG_PRIVATE_KEY: ${{ secrets.APT_REPO_GPG_PRIVATE_KEY != '' }}
+      HAS_APT_REPO_GPG_KEYID: ${{ secrets.APT_REPO_GPG_KEYID != '' }}
+    steps:
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends dpkg-dev gnupg xz-utils
+
+      - uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Download package artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: deb-packages-*
+          path: out
+          merge-multiple: true
+
+      - name: Import apt signing key
+        if: ${{ env.HAS_APT_REPO_GPG_PRIVATE_KEY == 'true' }}
+        env:
+          APT_REPO_GPG_PRIVATE_KEY: ${{ secrets.APT_REPO_GPG_PRIVATE_KEY }}
+        run: |
+          install -d -m 0700 ~/.gnupg
+          printf '%s' "$APT_REPO_GPG_PRIVATE_KEY" | gpg --batch --import
+
+      - name: Validate signing secrets
+        run: |
+          test "${HAS_APT_REPO_GPG_PRIVATE_KEY}" = "true"
+          test "${HAS_APT_REPO_GPG_KEYID}" = "true"
+
+      - name: Create apt repository
+        env:
+          APT_SIGN_KEYID: ${{ secrets.APT_REPO_GPG_KEYID }}
+        run: ARCHES="amd64 arm64" scripts/create_apt_repo.sh
+
+      - name: Export public key
+        if: ${{ env.HAS_APT_REPO_GPG_KEYID == 'true' }}
+        env:
+          APT_SIGN_KEYID: ${{ secrets.APT_REPO_GPG_KEYID }}
+        run: |
+          mkdir -p apt-repo
+          gpg --armor --export "$APT_SIGN_KEYID" > apt-repo/openmower-ros-one.asc
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: apt-repo
+
+  deploy:
+    needs: publish-repo
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
